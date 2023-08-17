@@ -1,17 +1,14 @@
 package sstiscanner.core;
 
 import burp.api.montoya.MontoyaApi;
-import burp.api.montoya.core.Marker;
 import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.scanner.AuditResult;
 import burp.api.montoya.scanner.ConsolidationAction;
 import burp.api.montoya.scanner.ScanCheck;
 import burp.api.montoya.scanner.audit.insertionpoint.AuditInsertionPoint;
 import burp.api.montoya.scanner.audit.issues.AuditIssue;
-import sstiscanner.core.Attacker;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import static burp.api.montoya.scanner.AuditResult.auditResult;
@@ -32,7 +29,9 @@ public class ScanChecks implements ScanCheck {
     @Override
     public AuditResult activeAudit(HttpRequestResponse baseRequestResponse, AuditInsertionPoint auditInsertionPoint) {
         List<AuditIssue> issues = new ArrayList<>();
+        this.api.logging().logToOutput("starting..");
         issues.addAll(this.attacker.blindAttack(baseRequestResponse, auditInsertionPoint));
+        this.api.logging().logToOutput("end..");
         return auditResult(issues);
     }
 

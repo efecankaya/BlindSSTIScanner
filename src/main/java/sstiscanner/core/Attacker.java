@@ -10,17 +10,16 @@ import burp.api.montoya.http.message.requests.HttpRequest;
 import burp.api.montoya.logging.Logging;
 import burp.api.montoya.scanner.audit.insertionpoint.AuditInsertionPoint;
 import burp.api.montoya.scanner.audit.issues.AuditIssue;
-import burp.api.montoya.scanner.audit.issues.AuditIssueConfidence;
-import burp.api.montoya.scanner.audit.issues.AuditIssueSeverity;
+import sstiscanner.engines.Engine;
+import sstiscanner.engines.Engines;
 import sstiscanner.utils.ExecutedAttack;
-import sstiscanner.engines.Jinja2;
+import sstiscanner.utils.ScanIssue;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static burp.api.montoya.core.ByteArray.byteArray;
-import static burp.api.montoya.scanner.audit.issues.AuditIssue.auditIssue;
 import static java.lang.String.format;
 
 public class Attacker {
@@ -29,6 +28,7 @@ public class Attacker {
     private Logging logger;
     private Http http;
     private CollaboratorClient collaboratorClient;
+    private Engines engines = new Engines();;
 
     public Attacker(MontoyaApi api) {
         this.api = api;
@@ -38,14 +38,18 @@ public class Attacker {
     }
 
     public List<AuditIssue> blindAttack(HttpRequestResponse baseRequestResponse, AuditInsertionPoint auditInsertionPoint) {
-        CollaboratorPayload collaboratorPayload = this.collaboratorClient.generatePayload();
-        String collaboratorURL = collaboratorPayload.toString();
-        this.logger.logToOutput("Generated collaborator URL: " + collaboratorURL);
+        List<ExecutedAttack> executedAttacks = new ArrayList<>();
 
-        String payload = Jinja2.blind.replace("[PAYLOAD]", collaboratorURL);
-        this.logger.logToOutput("Sending payload: " + payload + " to insertion point " + auditInsertionPoint.name());
+        for (Engine engine : engines.getEngines()) {
+            CollaboratorPayload collaboratorPayload = this.collaboratorClient.generatePayload();
+            String collaboratorURL = collaboratorPayload.toString();
+            this.logger.logToOutput("Generated collaborator URL: " + collaboratorURL);
+            this.logger.logToOutput("Engine Name: " + engine.name);
+            String payload = engine.payload.replace("[PAYLOAD]", collaboratorURL);
 
-        var executedAttacks = attackWithPayload(baseRequestResponse, auditInsertionPoint, payload, collaboratorPayload);
+            this.logger.logToOutput("Sending payload: " + payload + " to insertion point " + auditInsertionPoint.name());
+            executedAttacks.add(attackWithPayload(baseRequestResponse, auditInsertionPoint, payload, collaboratorPayload, engine));
+        }
 
         List<Interaction> interactions = this.collaboratorClient.getAllInteractions();
         this.logger.logToOutput("Number of interactions: " + interactions.size());
@@ -57,23 +61,22 @@ public class Attacker {
                     """, interaction.type().name(), interaction.id(), interaction.httpDetails()));
         }
 
-        return executedAttacks.stream()
-                .filter(executedAttack -> isInteracted(interactions, executedAttack))
-                .map(this::generateIssue)
-                .collect(Collectors.toList());
+        Stream<ExecutedAttack> successfulAttacks = executedAttacks.stream().filter(executedAttack -> isInteracted(interactions, executedAttack));
+
+        return successfulAttacks
+                .map(executedAttack -> {
+                    Engine engine = executedAttack.engine();
+                    return ScanIssue.generateIssue(auditInsertionPoint, executedAttack, engine);
+                })
+                .toList();
     }
 
-    private AuditIssue generateIssue(ExecutedAttack executedAttack) {
-        return auditIssue("SSTI", "Payload: " + executedAttack.payload(), null, executedAttack.baseRequestResponse().request().url(), AuditIssueSeverity.HIGH, AuditIssueConfidence.CERTAIN, null, null, AuditIssueSeverity.HIGH, executedAttack.attackRequestResponse().withResponseMarkers());
-    }
-
-    private List<ExecutedAttack> attackWithPayload(HttpRequestResponse baseRequestResponse, AuditInsertionPoint auditInsertionPoint, String payload, CollaboratorPayload collaboratorPayload) {
+    private ExecutedAttack attackWithPayload(HttpRequestResponse baseRequestResponse, AuditInsertionPoint auditInsertionPoint, String payload, CollaboratorPayload collaboratorPayload, Engine engine) {
         HttpRequest attackRequest = auditInsertionPoint.buildHttpRequestWithPayload(byteArray(payload)).withService(baseRequestResponse.httpService());
         List<ExecutedAttack> executedAttacks = new ArrayList<>();
         HttpRequestResponse attackRequestResponse = this.http.sendRequest(attackRequest);
         this.logger.logToOutput("Sent attack request, got response: " + attackRequestResponse.statusCode());
-        executedAttacks.add(new ExecutedAttack(collaboratorPayload.id().toString(), payload, baseRequestResponse, attackRequestResponse));
-        return executedAttacks;
+        return new ExecutedAttack(collaboratorPayload.id().toString(), payload, engine, auditInsertionPoint, baseRequestResponse, attackRequestResponse);
     }
 
     private boolean isInteracted(List<Interaction> interactions, ExecutedAttack executedAttack) {
