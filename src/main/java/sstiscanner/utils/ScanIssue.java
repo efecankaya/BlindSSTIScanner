@@ -1,4 +1,4 @@
-package sstiscanner;
+package sstiscanner.utils;
 
 public class ScanIssue {
 }

@@ -1,4 +1,4 @@
-package sstiscanner;
+package sstiscanner.core;
 
 import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.core.Marker;
@@ -23,7 +23,7 @@ public class ScanChecks implements ScanCheck {
     private final MontoyaApi api;
     private Attacker attacker;
 
-    ScanChecks(MontoyaApi api, Attacker attacker)
+    public ScanChecks(MontoyaApi api, Attacker attacker)
     {
         this.api = api;
         this.attacker = attacker;
@@ -44,30 +44,5 @@ public class ScanChecks implements ScanCheck {
     @Override
     public ConsolidationAction consolidateIssues(AuditIssue newIssue, AuditIssue existingIssue) {
         return existingIssue.name().equals(newIssue.name()) ? KEEP_EXISTING : KEEP_BOTH;
-    }
-
-    private static List<Marker> getResponseHighlights(HttpRequestResponse requestResponse, String match)
-    {
-        List<Marker> highlights = new LinkedList<>();
-        String response = requestResponse.response().toString();
-
-        int start = 0;
-
-        while (start < response.length())
-        {
-            start = response.indexOf(match, start);
-
-            if (start == -1)
-            {
-                break;
-            }
-
-            Marker marker = Marker.marker(start, start+match.length());
-            highlights.add(marker);
-
-            start += match.length();
-        }
-
-        return highlights;
     }
 }

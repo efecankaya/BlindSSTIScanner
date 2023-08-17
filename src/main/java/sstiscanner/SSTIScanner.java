@@ -2,9 +2,9 @@ package sstiscanner;
 
 import burp.api.montoya.BurpExtension;
 import burp.api.montoya.MontoyaApi;
-import burp.api.montoya.collaborator.Collaborator;
 import burp.api.montoya.logging.Logging;
 import sstiscanner.core.Attacker;
+import sstiscanner.core.ScanChecks;
 
 public class SSTIScanner implements BurpExtension {
 
