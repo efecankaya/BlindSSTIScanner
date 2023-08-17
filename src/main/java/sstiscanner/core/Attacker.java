@@ -1,6 +1,7 @@
 package sstiscanner.core;
 
 import burp.api.montoya.MontoyaApi;
+import burp.api.montoya.collaborator.CollaboratorClient;
 import burp.api.montoya.collaborator.Interaction;
 import burp.api.montoya.http.Http;
 import burp.api.montoya.http.message.HttpRequestResponse;
@@ -10,7 +11,6 @@ import burp.api.montoya.scanner.audit.insertionpoint.AuditInsertionPoint;
 import burp.api.montoya.scanner.audit.issues.AuditIssue;
 import burp.api.montoya.scanner.audit.issues.AuditIssueConfidence;
 import burp.api.montoya.scanner.audit.issues.AuditIssueSeverity;
-import sstiscanner.Collaborator;
 import sstiscanner.ExecutedAttack;
 import sstiscanner.engines.Jinja2;
 
@@ -27,17 +27,17 @@ public class Attacker {
     private final MontoyaApi api;
     private Logging logger;
     private Http http;
-    private Collaborator collaborator;
+    private CollaboratorClient collaboratorClient;
 
-    public Attacker(MontoyaApi api, Collaborator collaborator) {
+    public Attacker(MontoyaApi api) {
         this.api = api;
         this.logger = this.api.logging();
         this.http = this.api.http();
-        this.collaborator = collaborator;
+        this.collaboratorClient = this.api.collaborator().createClient();
     }
 
     public List<AuditIssue> blindAttack(HttpRequestResponse baseRequestResponse, AuditInsertionPoint auditInsertionPoint) {
-        String collaboratorPayload = this.collaborator.collaboratorClient.generatePayload().toString();
+        String collaboratorPayload = this.collaboratorClient.generatePayload().toString();
         this.logger.logToOutput("Generated collaborator payload: " + collaboratorPayload);
 
         String payload = Jinja2.blind.replace("[PAYLOAD]", collaboratorPayload);
@@ -45,42 +45,21 @@ public class Attacker {
 
         var executedAttacks = attackWithPayload(baseRequestResponse, auditInsertionPoint, payload);
 
-        List<Interaction> interactions = this.collaborator.collaboratorClient.getAllInteractions();
+        List<Interaction> interactions = this.collaboratorClient.getAllInteractions();
         this.logger.logToOutput("Number of interactions: " + interactions.size());
         for (Interaction interaction : interactions) {
-            this.logger.logToOutput(
-                    format(
-                            """
-                            Interaction type: %s
-                            Interaction ID: %s
-                            Interaction details: %s
-                            """,
-                            interaction.type().name(),
-                            interaction.id(),
-                            interaction.httpDetails()
-                    )
-            );
+            this.logger.logToOutput(format("""
+                    Interaction type: %s
+                    Interaction ID: %s
+                    Interaction details: %s
+                    """, interaction.type().name(), interaction.id(), interaction.httpDetails()));
         }
 
-        return executedAttacks.stream()
-                .filter(executedAttack -> isInteracted(interactions, executedAttack))
-                .map(this::generateIssue)
-                .collect(Collectors.toList());
+        return executedAttacks.stream().filter(executedAttack -> isInteracted(interactions, executedAttack)).map(this::generateIssue).collect(Collectors.toList());
     }
 
     private AuditIssue generateIssue(ExecutedAttack executedAttack) {
-        return auditIssue(
-                        "SSTI",
-                        "Payload: " + executedAttack.payload(),
-                        null,
-                        executedAttack.originalRequestResponse().request().url(),
-                        AuditIssueSeverity.HIGH,
-                        AuditIssueConfidence.CERTAIN,
-                        null,
-                        null,
-                        AuditIssueSeverity.HIGH,
-                        executedAttack.attackRequestResponse().withResponseMarkers()
-                );
+        return auditIssue("SSTI", "Payload: " + executedAttack.payload(), null, executedAttack.originalRequestResponse().request().url(), AuditIssueSeverity.HIGH, AuditIssueConfidence.CERTAIN, null, null, AuditIssueSeverity.HIGH, executedAttack.attackRequestResponse().withResponseMarkers());
     }
 
     private List<ExecutedAttack> attackWithPayload(HttpRequestResponse baseRequestResponse, AuditInsertionPoint auditInsertionPoint, String payload) {
