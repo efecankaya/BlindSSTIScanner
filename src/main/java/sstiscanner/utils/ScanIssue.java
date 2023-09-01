@@ -12,7 +12,7 @@ public class ScanIssue {
 
     public static AuditIssue generateIssue(AuditInsertionPoint insertionPoint, ExecutedAttack executedAttack, Engine engine) {
         return auditIssue(
-                "Out-of-band Server-side Template Injection (" + engine.name + ")",
+                "Code Execution via SSTI (" + engine.name + ")",
                 """
                 Parameter: <b>%s</b> <br/> Template engine: %s <br/> Payload: %s <br/> Collaborator callback id: %s
                 """.formatted(insertionPoint.name(), engine.name, executedAttack.payload(), executedAttack.id()),

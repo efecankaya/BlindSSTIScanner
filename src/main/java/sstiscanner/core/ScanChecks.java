@@ -37,7 +37,7 @@ public class ScanChecks implements ScanCheck {
 
     @Override
     public AuditResult passiveAudit(HttpRequestResponse baseRequestResponse) {
-        return null;
+        return AuditResult.auditResult(new ArrayList<>());
     }
 
     @Override
