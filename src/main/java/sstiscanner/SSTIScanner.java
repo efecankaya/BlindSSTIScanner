@@ -2,10 +2,10 @@ package sstiscanner;
 
 import burp.api.montoya.BurpExtension;
 import burp.api.montoya.MontoyaApi;
-import burp.api.montoya.logging.Logging;
 import sstiscanner.core.Attacker;
 import sstiscanner.core.ScanChecks;
 import sstiscanner.engines.Engines;
+import sstiscanner.utils.MyExtensionUnloadingHandler;
 import sstiscanner.view.ConfigView;
 import sstiscanner.utils.Config;
 
@@ -29,8 +29,9 @@ public class SSTIScanner implements BurpExtension {
         this.configView = new ConfigView(this.api, this.config);
         this.attacker = new Attacker(this.api, this.engines, this.config);
 
-        this.api.userInterface().registerSuiteTab(name, configView.$$$getRootComponent$$$());
+        this.api.userInterface().registerSuiteTab("SSTI Scanner", configView.$$$getRootComponent$$$());
         this.api.scanner().registerScanCheck(new ScanChecks(this.api, this.attacker));
+        this.api.extension().registerUnloadingHandler(new MyExtensionUnloadingHandler(api));
 
         this.api.logging().logToOutput(name + " has been loaded.");
     }

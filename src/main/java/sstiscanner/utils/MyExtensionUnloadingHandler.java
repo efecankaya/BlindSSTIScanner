@@ -7,14 +7,12 @@ public class MyExtensionUnloadingHandler implements ExtensionUnloadingHandler
 {
     private final MontoyaApi api;
 
-    public MyExtensionUnloadingHandler(MontoyaApi api)
-    {
+    public MyExtensionUnloadingHandler(MontoyaApi api) {
         this.api = api;
     }
 
     @Override
-    public void extensionUnloaded()
-    {
+    public void extensionUnloaded() {
         this.api.logging().logToOutput("Extension has been unloaded.");
     }
 }
