@@ -6,35 +6,32 @@ import burp.api.montoya.logging.Logging;
 import sstiscanner.core.Attacker;
 import sstiscanner.core.ScanChecks;
 import sstiscanner.engines.Engines;
-import sstiscanner.utils.ConfigWindow;
+import sstiscanner.view.ConfigView;
+import sstiscanner.utils.Config;
 
 public class SSTIScanner implements BurpExtension {
 
     MontoyaApi api;
-    Logging logger;
     Attacker attacker;
-
-    ConfigWindow configWindow;
     Engines engines;
+    Config config;
+    ConfigView configView;
 
     @Override
     public void initialize(MontoyaApi api) {
-        this.api = api;
-        this.api.extension().setName("SSTI Scanner");
+        String name = "Blind SSTI Scanner";
 
-        this.logger = api.logging();
+        this.api = api;
+        this.api.extension().setName(name);
 
         this.engines = new Engines();
+        this.config = new Config(engines);
+        this.configView = new ConfigView(this.api, this.config);
+        this.attacker = new Attacker(this.api, this.engines, this.config);
 
-        this.configWindow = new ConfigWindow(this.api, this.attacker, this.engines);
-        this.api.userInterface().registerSuiteTab("SSTI Scanner", configWindow.getUIComponent());
-
-        this.attacker = new Attacker(this.api, this.engines);
-
+        this.api.userInterface().registerSuiteTab(name, configView.$$$getRootComponent$$$());
         this.api.scanner().registerScanCheck(new ScanChecks(this.api, this.attacker));
 
-
-        this.logger.logToOutput("SSTI Scanner loaded");
-
+        this.api.logging().logToOutput(name + " has been loaded.");
     }
 }

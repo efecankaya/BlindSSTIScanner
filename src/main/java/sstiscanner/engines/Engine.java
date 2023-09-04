@@ -1,13 +1,39 @@
 package sstiscanner.engines;
 
-public class Engine {
-    public String name;
-    public String payload;
-    public Boolean isActivated;
+import java.util.List;
 
-    public Engine(String name, String payload, Boolean isActivated) {
+public class Engine {
+    private final String name;
+    private final String payload;
+    private final Language language;
+    private final List<String> contexts;
+
+    public enum Language {
+        PYTHON,
+        PHP,
+        JAVA,
+        JAVASCRIPT,
+        RUBY,
+        ASPNET
+    }
+
+    public Engine(String name, String payload, Language language, List<String> contexts) {
         this.name = name;
         this.payload = payload;
-        this.isActivated = isActivated;
+        this.language = language;
+        this.contexts = contexts;
     }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public String getPayload() {
+        return this.payload;
+    }
+
+    public Language getLanguage() {
+        return this.language;
+    }
+
 }

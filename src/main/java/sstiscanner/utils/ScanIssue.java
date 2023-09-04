@@ -12,10 +12,10 @@ public class ScanIssue {
 
     public static AuditIssue generateIssue(AuditInsertionPoint insertionPoint, ExecutedAttack executedAttack, Engine engine) {
         return auditIssue(
-                "Code Execution via SSTI (" + engine.name + ")",
+                "Code Execution via SSTI (" + engine.getName() + ")",
                 """
                 Parameter: <b>%s</b> <br/> Template engine: %s <br/> Payload: %s <br/> Collaborator callback id: %s
-                """.formatted(insertionPoint.name(), engine.name, executedAttack.payload(), executedAttack.id()),
+                """.formatted(insertionPoint.name(), engine.getName(), executedAttack.payload(), executedAttack.id()),
                 null,
                 executedAttack.baseRequestResponse().request().url(),
                 AuditIssueSeverity.HIGH,

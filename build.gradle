@@ -11,6 +11,7 @@ repositories {
 
 dependencies {
     implementation 'net.portswigger.burp.extensions:montoya-api:+'
+    implementation group: 'com.intellij', name: 'forms_rt', version: '7.0.3'
 }
 
 jar {

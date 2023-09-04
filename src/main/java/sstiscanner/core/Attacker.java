@@ -12,6 +12,7 @@ import burp.api.montoya.scanner.audit.insertionpoint.AuditInsertionPoint;
 import burp.api.montoya.scanner.audit.issues.AuditIssue;
 import sstiscanner.engines.Engine;
 import sstiscanner.engines.Engines;
+import sstiscanner.utils.Config;
 import sstiscanner.utils.ExecutedAttack;
 import sstiscanner.utils.ScanIssue;
 
@@ -29,27 +30,29 @@ public class Attacker {
     private Http http;
     private CollaboratorClient collaboratorClient;
     private Engines engines;
+    private Config config;
     public String cmd = "curl";
 
-    public Attacker(MontoyaApi api, Engines engines) {
+    public Attacker(MontoyaApi api, Engines engines, Config config) {
         this.api = api;
         this.logger = this.api.logging();
         this.http = this.api.http();
         this.collaboratorClient = this.api.collaborator().createClient();
         this.engines = engines;
+        this.config = config;
     }
 
     public List<AuditIssue> blindAttack(HttpRequestResponse baseRequestResponse, AuditInsertionPoint auditInsertionPoint) {
         List<ExecutedAttack> executedAttacks = new ArrayList<>();
 
         for (Engine engine : engines.getEngines()) {
-            if(engine.isActivated) {
+            if(config.isEngineEnabled(engine.getName())) {
                 CollaboratorPayload collaboratorPayload = this.collaboratorClient.generatePayload();
                 String collaboratorURL = collaboratorPayload.toString();
                 this.logger.logToOutput("Generated collaborator URL: " + collaboratorURL);
-                this.logger.logToOutput("Engine Name: " + engine.name);
-                String command = this.cmd + " " + engine.name + "." + collaboratorURL;
-                String payload = engine.payload.replace("[PAYLOAD]", command);
+                this.logger.logToOutput("Engine Name: " + engine.getName());
+                String command = this.cmd + " " + engine.getName() + "." + collaboratorURL;
+                String payload = engine.getPayload().replace("[COMMAND]", command);
 
                 this.logger.logToOutput("Sending payload: " + payload + " to insertion point " + auditInsertionPoint.name());
                 executedAttacks.add(attackWithPayload(baseRequestResponse, auditInsertionPoint, payload, collaboratorPayload, engine));
@@ -80,7 +83,7 @@ public class Attacker {
         HttpRequest attackRequest = auditInsertionPoint.buildHttpRequestWithPayload(byteArray(payload)).withService(baseRequestResponse.httpService());
         List<ExecutedAttack> executedAttacks = new ArrayList<>();
         HttpRequestResponse attackRequestResponse = this.http.sendRequest(attackRequest);
-        this.logger.logToOutput("Sent attack request, got response: " + attackRequestResponse.statusCode());
+        this.logger.logToOutput("Sent attack request, got response: " + attackRequestResponse.response().statusCode());
         return new ExecutedAttack(collaboratorPayload.id().toString(), payload, engine, auditInsertionPoint, baseRequestResponse, attackRequestResponse);
     }
 

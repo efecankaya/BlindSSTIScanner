@@ -18,7 +18,7 @@ import static burp.api.montoya.scanner.ConsolidationAction.KEEP_EXISTING;
 public class ScanChecks implements ScanCheck {
 
     private final MontoyaApi api;
-    private Attacker attacker;
+    private final Attacker attacker;
 
     public ScanChecks(MontoyaApi api, Attacker attacker)
     {
@@ -28,9 +28,8 @@ public class ScanChecks implements ScanCheck {
 
     @Override
     public AuditResult activeAudit(HttpRequestResponse baseRequestResponse, AuditInsertionPoint auditInsertionPoint) {
-        List<AuditIssue> issues = new ArrayList<>();
         this.api.logging().logToOutput("starting..");
-        issues.addAll(this.attacker.blindAttack(baseRequestResponse, auditInsertionPoint));
+        List<AuditIssue> issues = new ArrayList<>(this.attacker.blindAttack(baseRequestResponse, auditInsertionPoint));
         this.api.logging().logToOutput("end..");
         return auditResult(issues);
     }
