@@ -4,7 +4,6 @@ import sstiscanner.engines.Engine;
 import sstiscanner.engines.Engines;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class Config {
@@ -13,6 +12,7 @@ public class Config {
     private boolean pollingIsEnabled;
     private final Set<String> enabledEngines;
     private final Engines engines;
+    private final Command command;
 
     public Config(Engines engines) {
         this.polyglotIsEnabled = true;
@@ -20,6 +20,7 @@ public class Config {
         this.pollingIsEnabled = false;
         this.enabledEngines = new HashSet<>();
         this.engines = engines;
+        this.command = new Command();
         this.enableAllEngines();
     }
 
@@ -67,6 +68,18 @@ public class Config {
 
     public boolean isPollingEnabled() {
         return this.pollingIsEnabled;
+    }
+
+    public String getCommand() {
+        return this.command.getSelectedCommand();
+    }
+
+    public void setCommand(String customCommand) {
+        this.command.setCustomCommand(customCommand);
+    }
+
+    public void setCommandOption(String option) {
+        this.command.setSelectedOption(option);
     }
 
     /*
