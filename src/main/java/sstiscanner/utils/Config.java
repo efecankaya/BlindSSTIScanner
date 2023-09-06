@@ -1,26 +1,31 @@
 package sstiscanner.utils;
 
+import burp.api.montoya.MontoyaApi;
 import sstiscanner.engines.Engine;
 import sstiscanner.engines.Engines;
+import sstiscanner.core.Poller;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 
 public class Config {
     private boolean polyglotIsEnabled;
     private boolean contextEscapeIsEnabled;
-    private boolean pollingIsEnabled;
     private final Set<String> enabledEngines;
     private final Engines engines;
     private final Command command;
+    private final Poller poller;
+    MontoyaApi api;
 
-    public Config(Engines engines) {
+    public Config(Engines engines, Poller poller, MontoyaApi api) {
         this.polyglotIsEnabled = true;
         this.contextEscapeIsEnabled = true;
-        this.pollingIsEnabled = false;
         this.enabledEngines = new HashSet<>();
         this.engines = engines;
         this.command = new Command();
+        this.poller = poller;
+        this.api = api;
         this.enableAllEngines();
     }
 
@@ -43,7 +48,7 @@ public class Config {
     }
 
     public void disableAllEngines() {
-        this.enabledEngines.clear(); // Clear the set to disable all engines
+        this.enabledEngines.clear();
     }
 
     public void setPolyglotEnabled(boolean polyglotIsEnabled) {
@@ -62,14 +67,6 @@ public class Config {
         return this.contextEscapeIsEnabled;
     }
 
-    public void setPollingEnabled(boolean pollingIsEnabled) {
-        this.pollingIsEnabled = pollingIsEnabled;
-    }
-
-    public boolean isPollingEnabled() {
-        return this.pollingIsEnabled;
-    }
-
     public String getCommand() {
         return this.command.getSelectedCommand();
     }
@@ -82,21 +79,19 @@ public class Config {
         this.command.setSelectedOption(option);
     }
 
-    /*
-    public void enableLanguage(List<Engine> engines, Engine.Language language) {
-        for (Engine engine : engines) {
-            if (engine.getLanguage() == language) {
-                enableEngine(engine.getName());
-            }
-        }
+    public void startPolling(Duration duration) {
+        this.poller.start(duration);
     }
 
-    public void disableLanguage(List<Engine> engines, Engine.Language language) {
-        for (Engine engine : engines) {
-            if (engine.getLanguage() == language) {
-                disableEngine(engine.getName());
-            }
-        }
+    public void updatePollDuration(Duration duration) {
+        this.poller.update(duration);
     }
-    */
+
+    public void stopPolling() {
+        this.poller.shutdown();
+    }
+
+    public void pollNow() {
+        this.poller.poll();
+    }
 }

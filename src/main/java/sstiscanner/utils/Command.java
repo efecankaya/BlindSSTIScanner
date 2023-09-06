@@ -15,10 +15,6 @@ public class Command {
     }
 
     public String getSelectedCommand() {
-        if (this.selectedOption == null) {
-            throw new IllegalStateException("No option selected.");
-        }
-
         return switch (this.selectedOption) {
             case "nslookup" -> this.nslookup;
             case "curl" -> this.curl;

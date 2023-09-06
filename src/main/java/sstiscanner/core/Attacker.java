@@ -34,16 +34,17 @@ public class Attacker {
     private final Engines engines;
     private final Config config;
 
-    public Attacker(MontoyaApi api, Engines engines, Config config) {
+
+    public Attacker(MontoyaApi api, Engines engines, Config config, CollaboratorClient collaboratorClient) {
         this.logger = api.logging();
         this.http = api.http();
-        this.collaboratorClient = api.collaborator().createClient();
+        this.collaboratorClient = collaboratorClient;
         this.engines = engines;
         this.config = config;
     }
 
     public List<AuditIssue> blindAttack(HttpRequestResponse baseRequestResponse, AuditInsertionPoint auditInsertionPoint) {
-        List<ExecutedAttack> executedAttacks = new ArrayList<>();
+        List<ExecutedAttack> currentAttacks = new ArrayList<>();
         boolean isInteresting = false;
 
         // Quick detection with polyglots
@@ -78,7 +79,7 @@ public class Attacker {
                     String payload = engine.getPayload().replace("[COMMAND]", command);
 
                     this.logger.logToOutput("Sending payload: " + payload + " to insertion point " + auditInsertionPoint.name());
-                    executedAttacks.add(attackWithPayload(baseRequestResponse, auditInsertionPoint, payload, collaboratorPayload, engine));
+                    currentAttacks.add(attackWithPayload(baseRequestResponse, auditInsertionPoint, payload, collaboratorPayload, engine));
                 }
             }
         }
@@ -93,7 +94,7 @@ public class Attacker {
                     """, interaction.type().name(), interaction.id(), interaction.httpDetails()));
         }
 
-        Stream<ExecutedAttack> successfulAttacks = executedAttacks.stream().filter(executedAttack -> isInteracted(interactions, executedAttack));
+        Stream<ExecutedAttack> successfulAttacks = currentAttacks.stream().filter(executedAttack -> isInteracted(interactions, executedAttack));
 
         return successfulAttacks
                 .map(executedAttack -> {
