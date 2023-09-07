@@ -10,7 +10,7 @@ public class ScanIssue {
 
     public static AuditIssue generateIssue(ExecutedAttack executedAttack) {
         return auditIssue(
-                "Code Execution via SSTI (" + executedAttack.engine().getName() + ")",
+                "Out of Band Code Code Execution via SSTI (" + executedAttack.engine().getName() + ")",
                 """
                 Parameter: <b>%s</b> <br/> Template engine: %s <br/> Payload: %s <br/> Collaborator callback id: %s
                 """.formatted(executedAttack.insertionPoint().name(), executedAttack.engine().getName(), executedAttack.payload(), executedAttack.id()),

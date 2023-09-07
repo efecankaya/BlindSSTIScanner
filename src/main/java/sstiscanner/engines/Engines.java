@@ -27,13 +27,15 @@ public class Engines {
         this.addEngine("FreeMarker", Payloads.FREEMARKER_PAYLOAD, Engine.Language.JAVA, Contexts.JINJA2_CONTEXT);
         this.addEngine("Velocity", Payloads.VELOCITY_PAYLOAD, Engine.Language.JAVA, Contexts.JINJA2_CONTEXT);
         this.addEngine("Thymeleaf", Payloads.THYMELEAF_PAYLOAD, Engine.Language.JAVA, Contexts.JINJA2_CONTEXT);
+        this.addEngine("Pebble", Payloads.PEBBLE_PAYLOAD, Engine.Language.JAVA, Contexts.JINJA2_CONTEXT);
 
         // JavaScript
         this.addEngine("Nunjucks", Payloads.NUNJUCKS_PAYLOAD, Engine.Language.JAVASCRIPT, Contexts.JINJA2_CONTEXT);
         this.addEngine("doT", Payloads.DOT_PAYLOAD, Engine.Language.JAVASCRIPT, Contexts.JINJA2_CONTEXT);
         this.addEngine("EJS", Payloads.EJS_PAYLOAD, Engine.Language.JAVASCRIPT, Contexts.JINJA2_CONTEXT);
-        this.addEngine("Vuejs", Payloads.VUEJS_PAYLOAD, Engine.Language.JAVASCRIPT, Contexts.JINJA2_CONTEXT);
-        this.addEngine("Jade", Payloads.JADE_PAYLOAD, Engine.Language.JAVASCRIPT, Contexts.JINJA2_CONTEXT);
+        this.addEngine("Marko", Payloads.MARKO_PAYLOAD, Engine.Language.JAVASCRIPT, Contexts.JINJA2_CONTEXT);
+        this.addEngine("Pug", Payloads.PUG_PAYLOAD, Engine.Language.JAVASCRIPT, Contexts.JINJA2_CONTEXT);
+        this.addEngine("Handlebars", Payloads.HANDLEBARS_PAYLOAD, Engine.Language.JAVASCRIPT, Contexts.JINJA2_CONTEXT);
 
         // Ruby
         this.addEngine("Slim", Payloads.SLIM_PAYLOAD, Engine.Language.RUBY, Contexts.JINJA2_CONTEXT);

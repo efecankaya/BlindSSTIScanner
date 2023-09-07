@@ -1,10 +1,8 @@
 package sstiscanner.core;
 
 import burp.api.montoya.MontoyaApi;
-import sstiscanner.core.Attacks;
 import sstiscanner.engines.Engine;
 import sstiscanner.engines.Engines;
-import sstiscanner.core.Poller;
 import sstiscanner.utils.Command;
 
 import java.time.Duration;
@@ -29,7 +27,7 @@ public class Config {
         this.poller = poller;
         this.attacks = attacks;
 
-        this.polyglotIsEnabled = true;
+        this.polyglotIsEnabled = false;
         this.contextEscapeIsEnabled = true;
         this.enabledEngines = new HashSet<>();
         this.enableAllEngines();
