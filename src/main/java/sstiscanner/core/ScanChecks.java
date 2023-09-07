@@ -41,6 +41,6 @@ public class ScanChecks implements ScanCheck {
 
     @Override
     public ConsolidationAction consolidateIssues(AuditIssue newIssue, AuditIssue existingIssue) {
-        return (existingIssue.name().equals(newIssue.name()) && existingIssue.baseUrl().equals(newIssue.baseUrl())) ? KEEP_EXISTING : KEEP_BOTH;
+        return (existingIssue.name().equals(newIssue.name())) ? KEEP_EXISTING : KEEP_BOTH;
     }
 }

@@ -5,7 +5,7 @@ import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.collaborator.CollaboratorClient;
 import sstiscanner.core.*;
 import sstiscanner.engines.Engines;
-import sstiscanner.utils.MyExtensionUnloadingHandler;
+import sstiscanner.utils.UnloadHandler;
 import sstiscanner.view.ConfigView;
 
 public class SSTIScanner implements BurpExtension {
@@ -35,7 +35,7 @@ public class SSTIScanner implements BurpExtension {
 
         this.api.userInterface().registerSuiteTab("SSTI Scanner", this.configView.$$$getRootComponent$$$());
         this.api.scanner().registerScanCheck(new ScanChecks(this.api, this.attacker));
-        this.api.extension().registerUnloadingHandler(new MyExtensionUnloadingHandler(this.api));
+        this.api.extension().registerUnloadingHandler(new UnloadHandler(this.api));
 
         this.api.logging().logToOutput("Blind SSTI Scanner has been loaded.");
     }

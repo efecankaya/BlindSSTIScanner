@@ -10,6 +10,7 @@ import burp.api.montoya.http.message.responses.analysis.AttributeType;
 import burp.api.montoya.http.message.responses.analysis.ResponseVariationsAnalyzer;
 import burp.api.montoya.scanner.audit.insertionpoint.AuditInsertionPoint;
 import burp.api.montoya.scanner.audit.issues.AuditIssue;
+import sstiscanner.engines.Contexts;
 import sstiscanner.engines.Engine;
 import sstiscanner.engines.Engines;
 import sstiscanner.utils.ExecutedAttack;
@@ -63,15 +64,24 @@ public class Attacker {
         if (!this.config.isPolyglotEnabled() || isInteresting) {
             for (Engine engine : this.engines.getEngines()) {
                 if(this.config.isEngineEnabled(engine.getName())) {
-                    CollaboratorPayload collaboratorPayload = this.collaboratorClient.generatePayload();
-                    String collaboratorURL = collaboratorPayload.toString();
-                    this.api.logging().logToOutput("Generated collaborator URL: " + collaboratorURL);
-                    this.api.logging().logToOutput("Engine Name: " + engine.getName());
-                    String command = this.config.getCommand().replace("<COLLABORATOR>", collaboratorURL);
-                    String payload = engine.getPayload().replace("[COMMAND]", command);
+                    List<String> payloads = new ArrayList<>(List.of(engine.getPayload()));
 
-                    this.api.logging().logToOutput("Sending payload: " + payload + " to insertion point " + auditInsertionPoint.name());
-                    currentAttacks.add(attackWithPayload(baseRequestResponse, auditInsertionPoint, payload, collaboratorPayload, engine));
+                    if (this.config.isContextEscapeEnabled()) {
+                        payloads.addAll(Contexts.generateCodeEscapePayloads(engine.getPayload(), engine.getContexts()));
+                    }
+
+                    for (String payload : payloads) {
+                        CollaboratorPayload collaboratorPayload = this.collaboratorClient.generatePayload();
+                        String collaboratorURL = collaboratorPayload.toString();
+
+                        this.api.logging().logToOutput("Generated collaborator URL: " + collaboratorURL);
+                        this.api.logging().logToOutput("Engine Name: " + engine.getName());
+
+                        String command = this.config.getCommand().replace("<COLLABORATOR>", collaboratorURL);
+                        String currentPayload = payload.replace("[COMMAND]", command);
+
+                        currentAttacks.add(attackWithPayload(baseRequestResponse, auditInsertionPoint, currentPayload, collaboratorPayload, engine));
+                    }
                 }
             }
         }
@@ -81,14 +91,6 @@ public class Attacker {
         }
 
         List<Interaction> interactions = this.collaboratorClient.getAllInteractions();
-        this.api.logging().logToOutput("Number of interactions: " + interactions.size());
-        for (Interaction interaction : interactions) {
-            this.api.logging().logToOutput(format("""
-                    Interaction type: %s
-                    Interaction ID: %s
-                    Interaction details: %s
-                    """, interaction.type().name(), interaction.id(), interaction.httpDetails().isPresent() ? interaction.httpDetails().get().requestResponse().request() : "none"));
-        }
 
         return interactionHandler.generateIssues(currentAttacks, interactions);
     }

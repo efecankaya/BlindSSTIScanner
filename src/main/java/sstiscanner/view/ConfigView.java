@@ -383,6 +383,7 @@ public class ConfigView {
         checkboxesMap.put(dotCheckBox, "doT");
         checkboxesMap.put(ejsCheckBox, "EJS");
         checkboxesMap.put(markoCheckBox, "Marko");
+        checkboxesMap.put(handlebarsCheckBox, "Handlebars");
         checkboxesMap.put(pugCheckBox, "Pug (Jade)");
 
         checkboxesMap.put(slimCheckBox, "Slim");

@@ -3,12 +3,13 @@ package sstiscanner.core;
 import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.collaborator.Interaction;
 import burp.api.montoya.scanner.audit.issues.AuditIssue;
-import burp.api.montoya.sitemap.SiteMapFilter;
+import sstiscanner.utils.AttackInteraction;
 import sstiscanner.utils.ExecutedAttack;
 import sstiscanner.utils.ScanIssue;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 public class InteractionHandler {
 
@@ -18,33 +19,20 @@ public class InteractionHandler {
         this.api = api;
     }
 
-    private static boolean isInteracted(ExecutedAttack executedAttack, List<Interaction> interactions) {
-        return interactions.stream().anyMatch(interaction -> executedAttack.id().equals(interaction.id().toString()));
-    }
-
     public List<AuditIssue> generateIssues(List<ExecutedAttack> attacks, List<Interaction> interactions) {
-        Stream<ExecutedAttack> successfulAttacks = attacks.stream().filter(executedAttack -> isInteracted(executedAttack, interactions));
-        return successfulAttacks.map(ScanIssue::generateIssue).toList();
+        return attacks.stream()
+                .flatMap(attack -> interactions.stream()
+                        .filter(interaction -> attack.id().equals(interaction.id().toString()))
+                        .map(interaction -> new AttackInteraction(attack, interaction)))
+                .map(ScanIssue::generateIssue)
+                .collect(Collectors.toList());
     }
 
     public void handleInteractions(List<ExecutedAttack> attacks, List<Interaction> interactions) {
-        List<AuditIssue> issues = this.generateIssues(attacks, interactions);
-        this.addToSiteMap(issues);
+        this.addToSiteMap(this.generateIssues(attacks, interactions));
     }
 
     private void addToSiteMap(List<AuditIssue> issues) {
-        for (AuditIssue newIssue : issues) {
-            /*
-            boolean issueExists = false;
-            for (AuditIssue existingIssue : this.api.siteMap().issues()) {
-                if (existingIssue.name().equals(newIssue.name())) {
-                    issueExists = true;
-                    break;
-                }
-            }
-            if (!issueExists) this.api.siteMap().add(newIssue);
-            */
-            this.api.siteMap().add(newIssue);
-        }
+        issues.forEach(newIssue -> this.api.siteMap().add(newIssue));
     }
 }

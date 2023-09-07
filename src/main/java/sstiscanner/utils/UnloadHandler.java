@@ -3,11 +3,11 @@ package sstiscanner.utils;
 import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.extension.ExtensionUnloadingHandler;
 
-public class MyExtensionUnloadingHandler implements ExtensionUnloadingHandler
+public class UnloadHandler implements ExtensionUnloadingHandler
 {
     private final MontoyaApi api;
 
-    public MyExtensionUnloadingHandler(MontoyaApi api) {
+    public UnloadHandler(MontoyaApi api) {
         this.api = api;
     }
 

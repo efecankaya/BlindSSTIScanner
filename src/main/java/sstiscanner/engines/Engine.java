@@ -32,8 +32,7 @@ public class Engine {
         return this.payload;
     }
 
-    public Language getLanguage() {
-        return this.language;
+    public List<String> getContexts() {
+        return contexts;
     }
-
 }
