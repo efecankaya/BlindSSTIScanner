@@ -3,13 +3,10 @@ package sstiscanner;
 import burp.api.montoya.BurpExtension;
 import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.collaborator.CollaboratorClient;
-import sstiscanner.core.Attacker;
-import sstiscanner.core.ScanChecks;
+import sstiscanner.core.*;
 import sstiscanner.engines.Engines;
-import sstiscanner.core.Poller;
 import sstiscanner.utils.MyExtensionUnloadingHandler;
 import sstiscanner.view.ConfigView;
-import sstiscanner.utils.Config;
 
 public class SSTIScanner implements BurpExtension {
 
@@ -19,26 +16,27 @@ public class SSTIScanner implements BurpExtension {
     Config config;
     ConfigView configView;
     Poller poller;
+    Attacks attacks;
     CollaboratorClient collaboratorClient;
-
+    InteractionHandler interactionHandler;
     @Override
     public void initialize(MontoyaApi api) {
-        String name = "Blind SSTI Scanner";
-
         this.api = api;
-        this.api.extension().setName(name);
+        this.api.extension().setName("Blind SSTI Scanner");
 
-        this.collaboratorClient = this.api.collaborator().createClient();
-        this.poller = new Poller(this.collaboratorClient, this.api);
         this.engines = new Engines();
-        this.config = new Config(this.engines, this.poller, this.api);
+        this.attacks = new Attacks();
+        this.interactionHandler = new InteractionHandler(this.api);
+        this.collaboratorClient = this.api.collaborator().createClient();
+        this.poller = new Poller(this.collaboratorClient, this.attacks, this.api, this.interactionHandler);
+        this.config = new Config(this.api, this.engines, this.poller, this.attacks);
         this.configView = new ConfigView(this.config);
-        this.attacker = new Attacker(this.api, this.engines, this.config, this.collaboratorClient);
+        this.attacker = new Attacker(this.api, this.engines, this.config, this.collaboratorClient, this.attacks, this.interactionHandler);
 
         this.api.userInterface().registerSuiteTab("SSTI Scanner", this.configView.$$$getRootComponent$$$());
         this.api.scanner().registerScanCheck(new ScanChecks(this.api, this.attacker));
         this.api.extension().registerUnloadingHandler(new MyExtensionUnloadingHandler(this.api));
 
-        this.api.logging().logToOutput(name + " has been loaded.");
+        this.api.logging().logToOutput("Blind SSTI Scanner has been loaded.");
     }
 }

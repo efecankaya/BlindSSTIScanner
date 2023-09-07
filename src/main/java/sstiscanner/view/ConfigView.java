@@ -1,7 +1,6 @@
 package sstiscanner.view;
 
-import burp.api.montoya.MontoyaApi;
-import sstiscanner.utils.Config;
+import sstiscanner.core.Config;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -475,7 +474,7 @@ public class ConfigView {
                 autoPollLabel.setEnabled(true);
                 autoPollSecondsLabel.setEnabled(true);
 
-                // keep track of attacks
+                this.config.setKeepTrackEnabled(true);
             } else {
                 pollNowButton.setEnabled(false);
                 clearButton.setEnabled(false);
@@ -488,16 +487,17 @@ public class ConfigView {
                     this.config.stopPolling();
                 }
 
-
+                this.config.setKeepTrackEnabled(false);
+                this.config.clearAttacks();
             }
         });
 
         clearButton.addActionListener(e -> {
-            // clear the attacks list
+            this.config.clearAttacks();
         });
 
         pollNowButton.addActionListener(e -> {
-            config.pollNow();
+            this.config.pollNow();
         });
     }
 

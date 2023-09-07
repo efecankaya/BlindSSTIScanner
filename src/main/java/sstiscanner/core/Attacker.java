@@ -4,115 +4,101 @@ import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.collaborator.CollaboratorClient;
 import burp.api.montoya.collaborator.CollaboratorPayload;
 import burp.api.montoya.collaborator.Interaction;
-import burp.api.montoya.http.Http;
 import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.http.message.requests.HttpRequest;
 import burp.api.montoya.http.message.responses.analysis.AttributeType;
 import burp.api.montoya.http.message.responses.analysis.ResponseVariationsAnalyzer;
-import burp.api.montoya.logging.Logging;
 import burp.api.montoya.scanner.audit.insertionpoint.AuditInsertionPoint;
 import burp.api.montoya.scanner.audit.issues.AuditIssue;
 import sstiscanner.engines.Engine;
 import sstiscanner.engines.Engines;
-import sstiscanner.utils.Config;
 import sstiscanner.utils.ExecutedAttack;
-import sstiscanner.utils.ScanIssue;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import static burp.api.montoya.core.ByteArray.byteArray;
 import static java.lang.String.format;
 
 public class Attacker {
 
-    private final Logging logger;
-    private final Http http;
+    private final MontoyaApi api;
     private final CollaboratorClient collaboratorClient;
     private final Engines engines;
     private final Config config;
+    private final Attacks attacks;
+    private final InteractionHandler interactionHandler;
 
-
-    public Attacker(MontoyaApi api, Engines engines, Config config, CollaboratorClient collaboratorClient) {
-        this.logger = api.logging();
-        this.http = api.http();
+    public Attacker(MontoyaApi api, Engines engines, Config config, CollaboratorClient collaboratorClient, Attacks attacks, InteractionHandler interactionHandler) {
+        this.api = api;
         this.collaboratorClient = collaboratorClient;
         this.engines = engines;
         this.config = config;
+        this.attacks = attacks;
+        this.interactionHandler = interactionHandler;
     }
 
     public List<AuditIssue> blindAttack(HttpRequestResponse baseRequestResponse, AuditInsertionPoint auditInsertionPoint) {
         List<ExecutedAttack> currentAttacks = new ArrayList<>();
         boolean isInteresting = false;
 
-        // Quick detection with polyglots
-        if (config.isPolyglotEnabled()) {
-            for (String polyglot : engines.getPolyglots()) {
+        if (this.config.isPolyglotEnabled()) {
+            for (String polyglot : this.engines.getPolyglots()) {
                 HttpRequest attackRequest = auditInsertionPoint.buildHttpRequestWithPayload(byteArray(polyglot)).withService(baseRequestResponse.httpService());
-                HttpRequestResponse attackRequestResponse = this.http.sendRequest(attackRequest);
+                HttpRequestResponse attackRequestResponse = this.api.http().sendRequest(attackRequest);
 
-                ResponseVariationsAnalyzer analyzer = this.http.createResponseVariationsAnalyzer();
+                ResponseVariationsAnalyzer analyzer = this.api.http().createResponseVariationsAnalyzer();
                 analyzer.updateWith(baseRequestResponse.response());
                 analyzer.updateWith(attackRequestResponse.response());
-                //this.logger.logToOutput("Invariant: " + analyzer.invariantAttributes().toString());
-                //this.logger.logToOutput("Variant: " + analyzer.variantAttributes().toString());
 
                 Set<AttributeType> variants = analyzer.variantAttributes();
                 if (variants.contains(AttributeType.STATUS_CODE) || variants.contains(AttributeType.LINE_COUNT)) {
-                    //this.logger.logToOutput("Polyglot payload " + polyglot + " caused interesting behavior.");
                     isInteresting = true;
                     break;
                 }
             }
         }
 
-        if (!config.isPolyglotEnabled() || isInteresting) {
-            for (Engine engine : engines.getEngines()) {
-                if(config.isEngineEnabled(engine.getName())) {
+        if (!this.config.isPolyglotEnabled() || isInteresting) {
+            for (Engine engine : this.engines.getEngines()) {
+                if(this.config.isEngineEnabled(engine.getName())) {
                     CollaboratorPayload collaboratorPayload = this.collaboratorClient.generatePayload();
                     String collaboratorURL = collaboratorPayload.toString();
-                    this.logger.logToOutput("Generated collaborator URL: " + collaboratorURL);
-                    this.logger.logToOutput("Engine Name: " + engine.getName());
+                    this.api.logging().logToOutput("Generated collaborator URL: " + collaboratorURL);
+                    this.api.logging().logToOutput("Engine Name: " + engine.getName());
                     String command = this.config.getCommand().replace("<COLLABORATOR>", collaboratorURL);
                     String payload = engine.getPayload().replace("[COMMAND]", command);
 
-                    this.logger.logToOutput("Sending payload: " + payload + " to insertion point " + auditInsertionPoint.name());
+                    this.api.logging().logToOutput("Sending payload: " + payload + " to insertion point " + auditInsertionPoint.name());
                     currentAttacks.add(attackWithPayload(baseRequestResponse, auditInsertionPoint, payload, collaboratorPayload, engine));
                 }
             }
         }
 
+        if (this.config.isKeepTrackEnabled()) {
+            this.attacks.addAll(currentAttacks);
+        }
+
         List<Interaction> interactions = this.collaboratorClient.getAllInteractions();
-        this.logger.logToOutput("Number of interactions: " + interactions.size());
+        this.api.logging().logToOutput("Number of interactions: " + interactions.size());
         for (Interaction interaction : interactions) {
-            this.logger.logToOutput(format("""
+            this.api.logging().logToOutput(format("""
                     Interaction type: %s
                     Interaction ID: %s
                     Interaction details: %s
-                    """, interaction.type().name(), interaction.id(), interaction.httpDetails()));
+                    """, interaction.type().name(), interaction.id(), interaction.httpDetails().isPresent() ? interaction.httpDetails().get().requestResponse().request() : "none"));
         }
 
-        Stream<ExecutedAttack> successfulAttacks = currentAttacks.stream().filter(executedAttack -> isInteracted(interactions, executedAttack));
-
-        return successfulAttacks
-                .map(executedAttack -> {
-                    Engine engine = executedAttack.engine();
-                    return ScanIssue.generateIssue(auditInsertionPoint, executedAttack, engine);
-                })
-                .toList();
+        return interactionHandler.generateIssues(currentAttacks, interactions);
     }
 
     private ExecutedAttack attackWithPayload(HttpRequestResponse baseRequestResponse, AuditInsertionPoint auditInsertionPoint, String payload, CollaboratorPayload collaboratorPayload, Engine engine) {
         HttpRequest attackRequest = auditInsertionPoint.buildHttpRequestWithPayload(byteArray(payload)).withService(baseRequestResponse.httpService());
-        HttpRequestResponse attackRequestResponse = this.http.sendRequest(attackRequest);
-        this.logger.logToOutput("Sent attack request, got response: " + attackRequestResponse.response().statusCode());
+        HttpRequestResponse attackRequestResponse = this.api.http().sendRequest(attackRequest);
+        this.api.logging().logToOutput("Sent attack request, got response: " + attackRequestResponse.response().statusCode());
         return new ExecutedAttack(collaboratorPayload.id().toString(), payload, engine, auditInsertionPoint, baseRequestResponse, attackRequestResponse);
     }
 
-    private boolean isInteracted(List<Interaction> interactions, ExecutedAttack executedAttack) {
-        String id = executedAttack.id();
-        return interactions.stream().anyMatch(interaction -> id.equals(interaction.id().toString()));
-    }
+
 }

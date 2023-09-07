@@ -1,9 +1,11 @@
-package sstiscanner.utils;
+package sstiscanner.core;
 
 import burp.api.montoya.MontoyaApi;
+import sstiscanner.core.Attacks;
 import sstiscanner.engines.Engine;
 import sstiscanner.engines.Engines;
 import sstiscanner.core.Poller;
+import sstiscanner.utils.Command;
 
 import java.time.Duration;
 import java.util.HashSet;
@@ -12,20 +14,24 @@ import java.util.Set;
 public class Config {
     private boolean polyglotIsEnabled;
     private boolean contextEscapeIsEnabled;
+    private boolean keepTrackOfGenerated;
     private final Set<String> enabledEngines;
     private final Engines engines;
     private final Command command;
     private final Poller poller;
+    private final Attacks attacks;
     MontoyaApi api;
 
-    public Config(Engines engines, Poller poller, MontoyaApi api) {
-        this.polyglotIsEnabled = true;
-        this.contextEscapeIsEnabled = true;
-        this.enabledEngines = new HashSet<>();
+    public Config(MontoyaApi api, Engines engines, Poller poller, Attacks attacks) {
+        this.api = api;
         this.engines = engines;
         this.command = new Command();
         this.poller = poller;
-        this.api = api;
+        this.attacks = attacks;
+
+        this.polyglotIsEnabled = true;
+        this.contextEscapeIsEnabled = true;
+        this.enabledEngines = new HashSet<>();
         this.enableAllEngines();
     }
 
@@ -93,5 +99,17 @@ public class Config {
 
     public void pollNow() {
         this.poller.poll();
+    }
+
+    public boolean isKeepTrackEnabled() {
+        return this.keepTrackOfGenerated;
+    }
+
+    public void setKeepTrackEnabled(boolean keepTrackOfGenerated) {
+        this.keepTrackOfGenerated = keepTrackOfGenerated;
+    }
+
+    public void clearAttacks() {
+        this.attacks.clear();
     }
 }

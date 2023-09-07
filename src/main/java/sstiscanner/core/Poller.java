@@ -3,6 +3,7 @@ package sstiscanner.core;
 import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.collaborator.CollaboratorClient;
 import burp.api.montoya.collaborator.Interaction;
+import burp.api.montoya.scanner.audit.issues.AuditIssue;
 
 import java.time.Duration;
 import java.util.List;
@@ -14,11 +15,15 @@ public class Poller {
     private final CollaboratorClient collaboratorClient;
     private ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
     private ScheduledFuture<?> schedule;
-    MontoyaApi api;
+    private final Attacks attacks;
+    private final MontoyaApi api;
+    private final InteractionHandler interactionHandler;
 
-    public Poller(CollaboratorClient collaboratorClient, MontoyaApi api) {
+    public Poller(CollaboratorClient collaboratorClient, Attacks attacks, MontoyaApi api, InteractionHandler interactionHandler) {
         this.collaboratorClient = collaboratorClient;
+        this.attacks = attacks;
         this.api = api;
+        this.interactionHandler = interactionHandler;
     }
 
     public void start(Duration duration) {
@@ -37,12 +42,7 @@ public class Poller {
     }
 
     public void poll() {
-        List<Interaction> interactionList = collaboratorClient.getAllInteractions();
-        this.api.logging().logToOutput("get all interactions...");
-
-        for (Interaction interaction : interactionList) {
-            this.api.logging().logToOutput(interaction.toString());
-        }
+        interactionHandler.handleInteractions(this.attacks.getAllAttacks(), this.collaboratorClient.getAllInteractions());
     }
 
     private class PollingRunnable implements Runnable {
