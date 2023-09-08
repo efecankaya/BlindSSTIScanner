@@ -100,7 +100,7 @@ public class ConfigView {
         label3.setText("Sends each payload with multiple code context escape variations. Increases the number of requests. Increases accuracy.");
         panel2.add(label3, new com.intellij.uiDesigner.core.GridConstraints(10, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_WEST, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         enableCodeContext = new JCheckBox();
-        enableCodeContext.setSelected(true);
+        enableCodeContext.setSelected(false);
         enableCodeContext.setText("Enable code context escaping");
         panel2.add(enableCodeContext, new com.intellij.uiDesigner.core.GridConstraints(9, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_WEST, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JPanel panel5 = new JPanel();
@@ -364,6 +364,7 @@ public class ConfigView {
     public JComponent $$$getRootComponent$$$() {
         return mainPanel;
     }
+
     private void setupLogic() {
         Map<JCheckBox, String> checkboxesMap = new HashMap<>();
 

@@ -9,7 +9,6 @@ import sstiscanner.utils.ScanIssue;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class InteractionHandler {
 
@@ -20,12 +19,23 @@ public class InteractionHandler {
     }
 
     public List<AuditIssue> generateIssues(List<ExecutedAttack> attacks, List<Interaction> interactions) {
-        return attacks.stream()
-                .flatMap(attack -> interactions.stream()
-                        .filter(interaction -> attack.id().equals(interaction.id().toString()))
-                        .map(interaction -> new AttackInteraction(attack, interaction)))
-                .map(ScanIssue::generateIssue)
-                .collect(Collectors.toList());
+        List<AttackInteraction> successfulAttacks = new ArrayList<>();
+
+        for (ExecutedAttack attack : attacks) {
+            for (Interaction interaction : interactions) {
+                if (attack.id().equals(interaction.id().toString())) {
+                    successfulAttacks.add(new AttackInteraction(attack, interaction));
+                    break;
+                }
+            }
+        }
+
+        List<AuditIssue> issues = new ArrayList<>();
+        for (AttackInteraction attackInteraction : successfulAttacks) {
+            issues.add(ScanIssue.generateIssue(attackInteraction));
+        }
+
+        return issues;
     }
 
     public void handleInteractions(List<ExecutedAttack> attacks, List<Interaction> interactions) {

@@ -40,7 +40,7 @@ public class Attacker {
         this.interactionHandler = interactionHandler;
     }
 
-    public List<AuditIssue> blindAttack(HttpRequestResponse baseRequestResponse, AuditInsertionPoint auditInsertionPoint) {
+    public List<AuditIssue> attack(HttpRequestResponse baseRequestResponse, AuditInsertionPoint auditInsertionPoint) {
         List<ExecutedAttack> currentAttacks = new ArrayList<>();
         boolean isInteresting = false;
 
@@ -81,18 +81,23 @@ public class Attacker {
                         String currentPayload = payload.replace("[COMMAND]", command);
 
                         currentAttacks.add(attackWithPayload(baseRequestResponse, auditInsertionPoint, currentPayload, collaboratorPayload, engine));
+
+                        List<Interaction> interactions = this.collaboratorClient.getAllInteractions();
+                        if (interactions.size() > 0) {
+                            return interactionHandler.generateIssues(currentAttacks, interactions);
+                        }
                     }
+
+                    if (this.config.isKeepTrackEnabled()) {
+                        this.attacks.addAll(currentAttacks);
+                    }
+
+                    currentAttacks.clear();
                 }
             }
         }
 
-        if (this.config.isKeepTrackEnabled()) {
-            this.attacks.addAll(currentAttacks);
-        }
-
-        List<Interaction> interactions = this.collaboratorClient.getAllInteractions();
-
-        return interactionHandler.generateIssues(currentAttacks, interactions);
+        return new ArrayList<>();
     }
 
     private ExecutedAttack attackWithPayload(HttpRequestResponse baseRequestResponse, AuditInsertionPoint auditInsertionPoint, String payload, CollaboratorPayload collaboratorPayload, Engine engine) {

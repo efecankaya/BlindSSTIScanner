@@ -9,7 +9,6 @@ import burp.api.montoya.scanner.audit.insertionpoint.AuditInsertionPoint;
 import burp.api.montoya.scanner.audit.issues.AuditIssue;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static burp.api.montoya.scanner.AuditResult.auditResult;
 import static burp.api.montoya.scanner.ConsolidationAction.KEEP_BOTH;
@@ -28,10 +27,7 @@ public class ScanChecks implements ScanCheck {
 
     @Override
     public AuditResult activeAudit(HttpRequestResponse baseRequestResponse, AuditInsertionPoint auditInsertionPoint) {
-        this.api.logging().logToOutput("starting..");
-        List<AuditIssue> issues = new ArrayList<>(this.attacker.blindAttack(baseRequestResponse, auditInsertionPoint));
-        this.api.logging().logToOutput("end..");
-        return auditResult(issues);
+        return auditResult(new ArrayList<>(this.attacker.attack(baseRequestResponse, auditInsertionPoint)));
     }
 
     @Override

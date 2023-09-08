@@ -28,7 +28,7 @@ public class Config {
         this.attacks = attacks;
 
         this.polyglotIsEnabled = false;
-        this.contextEscapeIsEnabled = true;
+        this.contextEscapeIsEnabled = false;
         this.enabledEngines = new HashSet<>();
         this.enableAllEngines();
     }
