@@ -13,6 +13,6 @@ public class UnloadHandler implements ExtensionUnloadingHandler
 
     @Override
     public void extensionUnloaded() {
-        this.api.logging().logToOutput("Extension has been unloaded.");
+        this.api.logging().logToOutput("Extension has been unloaded");
     }
 }

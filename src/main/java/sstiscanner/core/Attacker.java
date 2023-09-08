@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Set;
 
 import static burp.api.montoya.core.ByteArray.byteArray;
-import static java.lang.String.format;
 
 public class Attacker {
 
@@ -70,12 +69,11 @@ public class Attacker {
                         payloads.addAll(Contexts.generateCodeEscapePayloads(engine.getPayload(), engine.getContexts()));
                     }
 
+                    this.api.logging().logToOutput("Testing for engine " + engine.getName());
+
                     for (String payload : payloads) {
                         CollaboratorPayload collaboratorPayload = this.collaboratorClient.generatePayload();
                         String collaboratorURL = collaboratorPayload.toString();
-
-                        this.api.logging().logToOutput("Generated collaborator URL: " + collaboratorURL);
-                        this.api.logging().logToOutput("Engine Name: " + engine.getName());
 
                         String command = this.config.getCommand().replace("<COLLABORATOR>", collaboratorURL);
                         String currentPayload = payload.replace("[COMMAND]", command);
@@ -103,9 +101,6 @@ public class Attacker {
     private ExecutedAttack attackWithPayload(HttpRequestResponse baseRequestResponse, AuditInsertionPoint auditInsertionPoint, String payload, CollaboratorPayload collaboratorPayload, Engine engine) {
         HttpRequest attackRequest = auditInsertionPoint.buildHttpRequestWithPayload(byteArray(payload)).withService(baseRequestResponse.httpService());
         HttpRequestResponse attackRequestResponse = this.api.http().sendRequest(attackRequest);
-        this.api.logging().logToOutput("Sent attack request, got response: " + attackRequestResponse.response().statusCode());
         return new ExecutedAttack(collaboratorPayload.id().toString(), payload, engine, auditInsertionPoint, baseRequestResponse, attackRequestResponse);
     }
-
-
 }

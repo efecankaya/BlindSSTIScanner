@@ -37,6 +37,6 @@ public class SSTIScanner implements BurpExtension {
         this.api.scanner().registerScanCheck(new ScanChecks(this.api, this.attacker));
         this.api.extension().registerUnloadingHandler(new UnloadHandler(this.api));
 
-        this.api.logging().logToOutput("Blind SSTI Scanner has been loaded.");
+        this.api.logging().logToOutput("Blind SSTI Scanner has been loaded");
     }
 }
