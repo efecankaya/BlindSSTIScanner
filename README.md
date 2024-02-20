@@ -1,14 +1,14 @@
 # Blind SSTI Scanner for Burp Suite
 
-This extension enchances Burp Suite's Active Scan by adding template engine specific payloads to detect remote code execution via server-side template injection.
+This extension enchances Burp Suite's Active Scan by adding template engine specific payloads to detect remote code execution via server-side template injection. The extension utilizes polyglot payloads and code context escaping for efficient and accurate detection.
 
 ### Usage
 
-Set the configurations as you please, and run an active scan against the target. Identified vulnerabilities will be reported as scanner issues.
+Run an Active Scan against the target. Identified vulnerabilities will be reported as scanner issues.
 
 ### Installation
 
-To install the extension, download the `jar` file from the [releases](https://github.com/efecankaya/BlindSSTIScanner/releases/tag/release) page, and add it to Burp Suite from Extensions > Add.
+To install the extension, download the `jar` file from the [releases](https://github.com/efecankaya/BlindSSTIScanner/releases/tag/release) page, and add it to Burp Suite from `Extensions > Add`.
 
 ### Configuration options
 
